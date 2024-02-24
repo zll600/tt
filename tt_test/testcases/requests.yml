@@ -1,62 +1,60 @@
 config:
-    name: "request methods testcase with functions"
+    name: "request methods testcase for test endpoint"
     variables:
-        foo1: config_bar1
-        foo2: config_bar2
-        expect_foo1: config_bar1
-        expect_foo2: config_bar2
-    headers:
-        User-Agent: ${get_user_agent()}
+        end_point: "http://localhost:5000/test"
     verify: False
-    export: ["foo3"]
 
 teststeps:
 -
-    name: get with params
-    variables:
-        foo1: ${ENV(USERNAME)}
-        foo2: bar21
-        sum_v: "${sum_two_int(10000000, 20000000)}"
+    name: get with params successfully
     request:
         method: GET
-        url: $base_url/get
+        url: $end_point
         params:
-            foo1: $foo1
-            foo2: $foo2
-            sum_v: $sum_v
-    extract:
-        foo3: "body.args.foo2"
+            a: 1
+            b: nihao
     validate:
         - eq: ["status_code", 200]
-        - eq: ["body.args.foo1", "debugtalk"]
-        - eq: ["body.args.sum_v", "30000000"]
-        - eq: ["body.args.foo2", "bar21"]
+        - eq: ["body.error_code", "0"]
+        - eq: ["body.error_message", "success"]
+        - eq: ["body.reference", "111"]
+
 -
-    name: post raw text
-    variables:
-        foo1: "bar12"
-        foo3: "bar32"
+    name: get with param a which is string
     request:
-        method: POST
-        url: $base_url/post
-        headers:
-            Content-Type: "text/plain"
-        body: "This is expected to be sent back as part of response body: $foo1-$foo2-$foo3."
+        method: GET
+        url: $end_point
+        params:
+            a: hello
+            b: nihao
     validate:
-        - eq: ["status_code", 200]
-        - eq: ["body.data", "This is expected to be sent back as part of response body: bar12-$expect_foo2-bar32."]
+        - eq: ["status_code", 400]
+        - eq: ["body.error_code", "1"]
+        - eq: ["body.error_message", "parameter a should be an integer"]
+        - eq: ["body.reference", "111"]
+
 -
-    name: post form data
-    variables:
-        foo2: bar23
+    name: get with param a which is lost
     request:
-        method: POST
-        url: $base_url/post
-        headers:
-            Content-Type: "application/x-www-form-urlencoded"
-        body: "foo1=$foo1&foo2=$foo2&foo3=$foo3"
+        method: GET
+        url: $end_point
+        params:
+            b: nihao
     validate:
         - eq: ["status_code", 200]
-        - eq: ["body.form.foo1", "$expect_foo1"]
-        - eq: ["body.form.foo2", "bar23"]
-        - eq: ["body.form.foo3", "bar21"]
+        - eq: ["body.error_code", "0"]
+        - eq: ["body.error_message", "success"]
+        - eq: ["body.reference", "111"]
+
+-
+    name: get with param a which is lost
+    request:
+        method: GET
+        url: $end_point
+        params:
+            a: 1
+    validate:
+        - eq: ["status_code", 400]
+        - eq: ["body.error_code", "2"]
+        - eq: ["body.error_message", "parameter b is necessary"]
+        - eq: ["body.reference", "111"]
